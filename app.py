@@ -52,7 +52,6 @@ def serve_static(filename):
 def index():
     return render_template('./index.html')
 
-@app.route('/chat', methods=['POST'])
 GEMINI_MODELS = [
     "gemini-1.5-pro",
     "gemini-2.0-pro-experimental-02-05",
@@ -62,6 +61,7 @@ GEMINI_MODELS = [
     "gemini-1.5-flash-8b",
     "gemini-1.5-flash"
 ]
+@app.route('/chat', methods=['POST'])
 
 def chat():
     data = request.get_json()
