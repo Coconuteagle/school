@@ -12,7 +12,7 @@ app = Flask(__name__, static_folder="static")
 CORS(app)
 
 # 🔹 Google Gemini API 설정
-genai.configure(api_key="YOUR_API_KEY")
+genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
 
 # 🔹 모델 순서대로 정렬
 GEMINI_MODELS = [
