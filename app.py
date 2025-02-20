@@ -70,7 +70,7 @@ def chat():
     relevant_sentences = find_most_similar_sentences(user_question, document_sentences, top_n=10)
     relevant_text = "\n".join(relevant_sentences)  # 🔥 리스트를 문자열로 변환
 
-    # 🔹 AI에게 전달할 프롬프트 생성 (텍스트가 제대로 포함되도록 수정)
+    # 🔹 AI에게 전달할 프롬프트 생성 (사용자 질문 포함)
     system_message = f"""{relevant_text}
 
     당신은 학교행정업무 서포터입니다. 
@@ -81,6 +81,9 @@ def chat():
     5. 관련 법령도 같이 답변(답변시 참조한 문장과 정확히 관련된 법령). 
     6. 링크가 있으면 링크도 답변(답변과 관련있는 링크만)."""
 
+    # 🔹 사용자 질문도 AI에게 전달되도록 수정
+    final_prompt = f"{system_message}\n\n사용자 질문: {user_question}"
+
     response = None
     last_exception = None  # 🔹 마지막 오류 저장
     switched_model = None  # 🔹 사용된 모델 저장
@@ -90,8 +93,8 @@ def chat():
             print(f"[🔄] 모델 시도: {model}")  # 🔹 로그에는 모델 변경 내역 표시
             client = genai.GenerativeModel(model)
 
-            # 🔥 AI 모델에게 system_message 포함하여 전달
-            response = client.generate_content(system_message)
+            # 🔥 AI 모델에게 user_question과 관련 문장을 포함하여 전달
+            response = client.generate_content(final_prompt)
 
             if response and hasattr(response, 'text') and response.text:
                 print(f"[✅] 모델 {model} 사용 성공!")
@@ -124,6 +127,7 @@ def chat():
         status=200,
         mimetype="application/json"
     )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
