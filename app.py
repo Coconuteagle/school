@@ -67,6 +67,7 @@ def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
 
+
     # 🔹 유사한 문장 찾기 (문자열 변환 필요)
     relevant_sentences = find_most_similar_sentences(user_question, document_sentences, top_n=10)
     relevant_text = "\n".join(relevant_sentences)  # 🔥 리스트를 문자열로 변환
@@ -104,8 +105,7 @@ def chat():
         except Exception as e:
             error_message = str(e).lower()
             last_exception = e  # 🔹 마지막 오류 저장
-
-            # 🔹 특정 에러 메시지 감지 후 자동으로 다음 모델로 스위칭
+            
             if any(keyword in error_message for keyword in ["quota exceeded", "rate limit", "429", "not found", "unsupported"]):
                 print(f"[⚠️] {model} 사용 불가 ({error_message}). 다음 모델로 전환 중...")
                 continue  # 다음 모델 시도
@@ -121,7 +121,10 @@ def chat():
     if switched_model:
         print(f"[ℹ️] 최종 사용된 모델: {switched_model}")
 
-    response_data = {"answer": response.text}  # 🔥 사이트 대화에서는 모델 변경 메시지 제거
+    # 🔥 AI 응답 내 URL을 하이퍼링크로 변환
+    answer_with_links = convert_urls_to_links(response.text)
+
+    response_data = {"answer": answer_with_links}  # 🔥 사이트 대화에서는 모델 변경 메시지 제거
 
     return app.response_class(
         response=json.dumps(response_data, ensure_ascii=False),  # ✨ 한글 깨짐 방지
