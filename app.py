@@ -16,6 +16,7 @@ genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
 
 # 🔹 모델 순서대로 정렬
 GEMINI_MODELS = [
+     "gemini-3.0-flash",  
     "gemini-2.0-flash",                    # 1️⃣ Gemini 2.0 Flash
     "gemini-2.0-flash-lite-preview",        # 2️⃣ Gemini 2.0 Flash-Lite 미리보기
     "gemini-1.5-flash",                     # 3️⃣ Gemini 1.5 Flash
@@ -81,7 +82,6 @@ def chat():
     5. 관련 법령도 같이 답변(답변시 참조한 문장과 정확히 관련된 법령). 
     6. 링크가 있으면 링크도 답변(답변과 관련있는 링크만)."""
 
-    # 🔹 사용자 질문도 AI에게 전달되도록 수정
     final_prompt = f"{system_message}\n\n사용자 질문: {user_question}"
 
     response = None
@@ -104,16 +104,17 @@ def chat():
         except Exception as e:
             error_message = str(e).lower()
             last_exception = e  # 🔹 마지막 오류 저장
-            
-            if "quota exceeded" in error_message or "rate limit" in error_message or "429" in error_message:
-                print(f"[⚠️] {model} 한도 초과! 다음 모델로 전환 중...")
+
+            # 🔹 특정 에러 메시지 감지 후 자동으로 다음 모델로 스위칭
+            if any(keyword in error_message for keyword in ["quota exceeded", "rate limit", "429", "not found", "unsupported"]):
+                print(f"[⚠️] {model} 사용 불가 ({error_message}). 다음 모델로 전환 중...")
                 continue  # 다음 모델 시도
             
             print(f"[❌] {model} 호출 오류: {e}")
             return jsonify({"answer": f"AI 응답 오류: {str(e)}"})
 
     if response is None or not hasattr(response, 'text') or not response.text:
-        print("[❌] 모든 모델이 한도를 초과했습니다.")
+        print("[❌] 모든 모델이 한도를 초과했거나 지원되지 않습니다.")
         return jsonify({"answer": f"현재 모든 AI 모델이 사용 불가 상태입니다. (에러: {last_exception})"})
 
     # 🔹 사용된 모델 정보를 로그에는 남기지만, 실제 응답에는 포함하지 않음
@@ -128,6 +129,3 @@ def chat():
         mimetype="application/json"
     )
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
