@@ -102,6 +102,10 @@ body {
             var message = input.value;
             input.value = "";
 
+            var userMessageElement = document.createElement("div");
+            userMessageElement.innerHTML = "<b>사용자:</b> " + message;
+            document.getElementById("messages").appendChild(userMessageElement);
+
             fetch("/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -109,10 +113,15 @@ body {
             })
             .then(response => response.json())
             .then(data => {
-                var messages = document.getElementById("messages");
-                var messageElement = document.createElement("div");
-                messageElement.innerHTML = "<b>챗봇:</b> " + data.answer;
-                messages.appendChild(messageElement);
+                var botMessageElement = document.createElement("div");
+                botMessageElement.innerHTML = "<b>챗봇:</b> " + data.answer;
+                document.getElementById("messages").appendChild(botMessageElement);
+            })
+            .catch(error => {
+                console.error("오류 발생:", error);
+                var errorMessageElement = document.createElement("div");
+                errorMessageElement.innerHTML = "<b>챗봇:</b> 오류가 발생했습니다. 다시 시도해주세요.";
+                document.getElementById("messages").appendChild(errorMessageElement);
             });
         }
     </script>
