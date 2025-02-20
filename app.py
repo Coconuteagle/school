@@ -66,48 +66,39 @@ def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
 
-    keywords = ["라헬", "오랑우탄"]
-    if any(keyword in user_question for keyword in keywords):
-        answer = "이것은 하이퍼링크를 포함한 답변입니다. <a href='https://naver.com'>여기</a>를 클릭하세요."
-        return jsonify({"answer": answer})
-
-    relevant_text = find_most_similar_sentences(user_question, document_sentences, top_n=10)
-    system_message = f"{relevant_text}\n\n당신은 카타리나입니다.\n1. 앞의 내용을 바탕으로 최대 7문장 이내+70단어 이내로 요약해서 존댓말로 답해줘.\n2. 질문이 내용과 관계없으면 다시 질문해주시겠어요? 라고 답변해줘\n3. 내용 바탕으로만 답변, 예외 사항과 사례 포함\n4. 사용자에게 재질문 금지\n5. 관련 법령도 포함 (참조한 문장과 정확히 관련된 법령)\n6. 링크가 있으면 링크도 답변 (관련 있는 링크만)\n"
-
     response = None
     last_exception = None  # 🔹 마지막 오류 저장
+    switched_model = None  # 🔹 사용된 모델 저장
 
     for model in GEMINI_MODELS:
         try:
             print(f"[🔄] 모델 시도: {model}")
             client = genai.GenerativeModel(model)
-            response = client.generate_content(system_message + "\n" + user_question)
+            response = client.generate_content(user_question)
             
-            # 🔹 정상 응답이 있으면 루프 탈출
             if response and hasattr(response, 'text') and response.text:
                 print(f"[✅] 모델 {model} 사용 성공!")
+                switched_model = model  # 모델 변경 감지
                 break
 
         except Exception as e:
             error_message = str(e).lower()
             last_exception = e  # 마지막 오류 저장
             
-            # 🔹 한도 초과 에러 감지
             if "quota exceeded" in error_message or "rate limit" in error_message or "429" in error_message:
                 print(f"[⚠️] {model} 한도 초과! 다음 모델로 전환 중...")
                 continue  # 다음 모델 시도
             
-            # 🔹 기타 오류 발생 시 즉시 종료
             print(f"[❌] {model} 호출 오류: {e}")
             return jsonify({"answer": f"AI 응답 오류: {str(e)}"})
 
-    # 🔹 모든 모델이 한도를 초과한 경우 처리
     if response is None or not hasattr(response, 'text') or not response.text:
         print("[❌] 모든 모델이 한도를 초과했습니다.")
         return jsonify({"answer": f"현재 모든 AI 모델이 사용 불가 상태입니다. (에러: {last_exception})"})
 
-    answer_with_links = convert_urls_to_links(response.text)
-    return jsonify(answer=answer_with_links)
+    # 🔹 모델 변경 메시지를 포함하여 응답 반환
+    switch_message = f"🔄 {switched_model} 모델로 전환되었습니다.\n\n" if switched_model else ""
+    return jsonify(answer=switch_message + response.text)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
