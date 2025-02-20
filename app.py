@@ -67,7 +67,6 @@ def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
 
-
     # 🔹 유사한 문장 찾기 (문자열 변환 필요)
     relevant_sentences = find_most_similar_sentences(user_question, document_sentences, top_n=10)
     relevant_text = "\n".join(relevant_sentences)  # 🔥 리스트를 문자열로 변환
@@ -81,7 +80,7 @@ def chat():
     3. 내용을 바탕으로만 답해줘. 또한 예외 사항이나 사례가 있으면 그것도 답해줘. 
     4. 사용자에게 재질문 금지. 
     5. 관련 법령도 같이 답변(답변시 참조한 문장과 정확히 관련된 법령). 
-    6. 링크가 있으면 링크도 답변(답변과 관련있는 링크만)."""
+    6. 링크가 있으면 링크만 출력해줘 (일반 텍스트는 포함하지 않음)."""
 
     final_prompt = f"{system_message}\n\n사용자 질문: {user_question}"
 
@@ -117,14 +116,10 @@ def chat():
         print("[❌] 모든 모델이 한도를 초과했거나 지원되지 않습니다.")
         return jsonify({"answer": f"현재 모든 AI 모델이 사용 불가 상태입니다. (에러: {last_exception})"})
 
-    # 🔹 사용된 모델 정보를 로그에는 남기지만, 실제 응답에는 포함하지 않음
-    if switched_model:
-        print(f"[ℹ️] 최종 사용된 모델: {switched_model}")
+    # 🔹 AI 응답에서 링크만 추출하여 출력
+    extracted_links = extract_links(response.text)
 
-    # 🔥 AI 응답 내 URL을 하이퍼링크로 변환
-    answer_with_links = convert_urls_to_links(response.text)
-
-    response_data = {"answer": answer_with_links}  # 🔥 사이트 대화에서는 모델 변경 메시지 제거
+    response_data = {"answer": extracted_links}  # 🔥 사용자에게는 링크만 반환
 
     return app.response_class(
         response=json.dumps(response_data, ensure_ascii=False),  # ✨ 한글 깨짐 방지
