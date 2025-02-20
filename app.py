@@ -17,13 +17,12 @@ genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
 # 🔹 GEMINI 모델 리스트 (무거운 순서)
 GEMINI_MODELS = [
     "gemini-1.5-pro",
-    "gemini-2.0-pro-experimental-02-05",
-    "gemini-2.0-flash-thinking-experimental-01-21",
-    "gemini-2.0-flash-lite-preview",
-    "gemini-2.0-flash",
+    "gemini-1.5-flash",
     "gemini-1.5-flash-8b",
-    "gemini-1.5-flash"
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite-preview"
 ]
+
 
 with open('data.txt', 'r', encoding='utf-8') as file:
     text = file.read()
