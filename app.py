@@ -65,7 +65,18 @@ GEMINI_MODELS = [
 def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
+    relevant_text = find_most_similar_sentences(user_question, document_sentences, top_n=10)
 
+    # 🔹 AI에게 전달할 시스템 메시지 추가
+    system_message = f"""{relevant_text}
+
+    당신은 학교행정업무 서포터입니다. 
+    1. 앞의 내용을 바탕으로 최대 7문장 이내+70단어 이내로 요약해서 존댓말로 답해줘. 
+    2. 질문이 내용과 관계없으면 다시 질문해주시겠어요? 라고 답변해줘. 
+    3. 내용을 바탕으로만 답해줘. 또한 예외 사항이나 사례가 있으면 그것도 답해줘. 
+    4. 사용자에게 재질문 금지. 
+    5. 관련 법령도 같이 답변(답변시 참조한 문장과 정확히 관련된 법령). 
+    6. 링크가 있으면 링크도 답변(답변과 관련있는 링크만)."""
     response = None
     last_exception = None  # 🔹 마지막 오류 저장
     switched_model = None  # 🔹 사용된 모델 저장
