@@ -14,17 +14,6 @@ CORS(app)
 # 🔹 Google Gemini API 설정
 genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
 
-# 🔹 GEMINI 모델 리스트 (무거운 순서)
-GEMINI_MODELS = [
-    "gemini-2.0-flash",                    # 1️⃣ Gemini 2.0 Flash
-    "gemini-2.0-flash-lite-preview",        # 2️⃣ Gemini 2.0 Flash-Lite 미리보기
-    "gemini-1.5-flash",                     # 3️⃣ Gemini 1.5 Flash
-    "gemini-1.5-flash-8b",                  # 4️⃣ Gemini 1.5 Flash-8B
-    "gemini-2.0-pro-experimental-02-05",    # 5️⃣ Gemini 2.0 Pro Experimental
-    "gemini-1.5-pro"                        # 6️⃣ Gemini 1.5 Pro
-]
-
-
 with open('data.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
@@ -62,6 +51,15 @@ def serve_static(filename):
 def index():
     return render_template('./index.html')
 
+GEMINI_MODELS = [
+    "gemini-2.0-flash",                    # 1️⃣ Gemini 2.0 Flash
+    "gemini-2.0-flash-lite-preview",        # 2️⃣ Gemini 2.0 Flash-Lite 미리보기
+    "gemini-1.5-flash",                     # 3️⃣ Gemini 1.5 Flash
+    "gemini-1.5-flash-8b",                  # 4️⃣ Gemini 1.5 Flash-8B
+    "gemini-2.0-pro-experimental-02-05",    # 5️⃣ Gemini 2.0 Pro Experimental
+    "gemini-1.5-pro"                        # 6️⃣ Gemini 1.5 Pro
+]
+
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
@@ -73,18 +71,18 @@ def chat():
 
     for model in GEMINI_MODELS:
         try:
-            print(f"[🔄] 모델 시도: {model}")
+            print(f"[🔄] 모델 시도: {model}")  # 🔹 로그에는 모델 변경 내역 표시
             client = genai.GenerativeModel(model)
             response = client.generate_content(user_question)
             
             if response and hasattr(response, 'text') and response.text:
                 print(f"[✅] 모델 {model} 사용 성공!")
-                switched_model = model  # 모델 변경 감지
+                switched_model = model  # 🔹 모델 변경 감지
                 break
 
         except Exception as e:
             error_message = str(e).lower()
-            last_exception = e  # 마지막 오류 저장
+            last_exception = e  # 🔹 마지막 오류 저장
             
             if "quota exceeded" in error_message or "rate limit" in error_message or "429" in error_message:
                 print(f"[⚠️] {model} 한도 초과! 다음 모델로 전환 중...")
@@ -97,9 +95,17 @@ def chat():
         print("[❌] 모든 모델이 한도를 초과했습니다.")
         return jsonify({"answer": f"현재 모든 AI 모델이 사용 불가 상태입니다. (에러: {last_exception})"})
 
-    # 🔹 모델 변경 메시지를 포함하여 응답 반환
-    switch_message = f"🔄 {switched_model} 모델로 전환되었습니다.\n\n" if switched_model else ""
-    return jsonify(answer=switch_message + response.text)
+    # 🔹 사용된 모델 정보를 로그에는 남기지만, 실제 응답에는 포함하지 않음
+    if switched_model:
+        print(f"[ℹ️] 최종 사용된 모델: {switched_model}")
+
+    response_data = {"answer": response.text}  # 🔥 사이트 대화에서는 모델 변경 메시지 제거
+
+    return app.response_class(
+        response=json.dumps(response_data, ensure_ascii=False),  # ✨ 한글 깨짐 방지
+        status=200,
+        mimetype="application/json"
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
