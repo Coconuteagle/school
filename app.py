@@ -54,13 +54,13 @@ def index():
 
 @app.route('/chat', methods=['POST'])
 GEMINI_MODELS = [
-    "gemini-1.5-pro",                      # 컨텍스트 32K, 가장 무거움
-    "gemini-2.0-pro-experimental-02-05",    # 컨텍스트 1M
-    "gemini-2.0-flash-thinking-experimental-01-21",  # 컨텍스트 4M (빠름)
-    "gemini-2.0-flash-lite-preview",        # 컨텍스트 1M, 빠른 속도
-    "gemini-2.0-flash",                     # 컨텍스트 1M, 기본 모델
-    "gemini-1.5-flash-8b",                   # 컨텍스트 1M, 경량화된 Flash 버전
-    "gemini-1.5-flash"                       # 컨텍스트 1M, 가장 가벼운 모델
+    "gemini-1.5-pro",
+    "gemini-2.0-pro-experimental-02-05",
+    "gemini-2.0-flash-thinking-experimental-01-21",
+    "gemini-2.0-flash-lite-preview",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-flash"
 ]
 
 def chat():
