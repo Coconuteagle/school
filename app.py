@@ -53,6 +53,16 @@ def index():
     return render_template('./index.html')
 
 @app.route('/chat', methods=['POST'])
+GEMINI_MODELS = [
+    "gemini-1.5-pro",                      # 컨텍스트 32K, 가장 무거움
+    "gemini-2.0-pro-experimental-02-05",    # 컨텍스트 1M
+    "gemini-2.0-flash-thinking-experimental-01-21",  # 컨텍스트 4M (빠름)
+    "gemini-2.0-flash-lite-preview",        # 컨텍스트 1M, 빠른 속도
+    "gemini-2.0-flash",                     # 컨텍스트 1M, 기본 모델
+    "gemini-1.5-flash-8b",                   # 컨텍스트 1M, 경량화된 Flash 버전
+    "gemini-1.5-flash"                       # 컨텍스트 1M, 가장 가벼운 모델
+]
+
 def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
@@ -65,11 +75,27 @@ def chat():
     relevant_text = find_most_similar_sentences(user_question, document_sentences, top_n=10)
     system_message = f"{relevant_text}\n\n당신은 카타리나입니다.\n1. 앞의 내용을 바탕으로 최대 7문장 이내+70단어 이내로 요약해서 존댓말로 답해줘.\n2. 질문이 내용과 관계없으면 다시 질문해주시겠어요? 라고 답변해줘\n3. 내용 바탕으로만 답변, 예외 사항과 사례 포함\n4. 사용자에게 재질문 금지\n5. 관련 법령도 포함 (참조한 문장과 정확히 관련된 법령)\n6. 링크가 있으면 링크도 답변 (관련 있는 링크만)\n"
 
-    client = genai.GenerativeModel("gemini-1.5-pro")
-    response = client.generate_content(system_message + "\n" + user_question)
-    answer_with_links = convert_urls_to_links(response.text)
-    
-    return jsonify(answer=answer_with_links)
+    response = None
+    for model in GEMINI_MODELS:
+        try:
+            print(f"[🔄] 모델 시도: {model}")
+            client = genai.GenerativeModel(model)
+            response = client.generate_content(system_message + "\n" + user_question)
+            if response:
+                break  # 성공하면 루프 탈출
+
+        except Exception as e:
+            if "quota exceeded" in str(e).lower():
+                print(f"[⚠️] {model} 한도 초과! 다음 모델로 전환...")
+            else:
+                print(f"[❌] {model} 호출 오류:", e)
+                return jsonify({"answer": "현재 AI 응답을 처리할 수 없습니다. 나중에 다시 시도해주세요."})
+
+    if response:
+        answer_with_links = convert_urls_to_links(response.text)
+        return jsonify(answer=answer_with_links)
+    else:
+        return jsonify({"answer": "현재 모든 AI 모델이 사용 불가 상태입니다. 나중에 다시 시도해주세요."})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
