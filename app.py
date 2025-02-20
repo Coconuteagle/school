@@ -65,7 +65,7 @@ def chat():
     relevant_text = find_most_similar_sentences(user_question, document_sentences, top_n=10)
     system_message = f"{relevant_text}\n\n당신은 청렴챗봇 프락시스입니다.\n1. 앞의 내용을 바탕으로 최대 7문장 이내+70단어 이내로 요약해서 존댓말로 답해줘.\n2. 질문이 내용과 관계없으면 다시 질문해주시겠어요? 라고 답변해줘\n3. 내용 바탕으로만 답변, 예외 사항과 사례 포함\n4. 사용자에게 재질문 금지\n5. 관련 법령도 포함 (참조한 문장과 정확히 관련된 법령)\n6. 링크가 있으면 링크도 답변 (관련 있는 링크만)\n"
 
-    client = genai.GenerativeModel("gemini-2.0-flash")
+    client = genai.GenerativeModel("gemini-1.5-pro")
     response = client.generate_content(system_message + "\n" + user_question)
     answer_with_links = convert_urls_to_links(response.text)
     
