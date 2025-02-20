@@ -1,12 +1,13 @@
+from flask import Flask, send_from_directory, render_template, request, jsonify, Response
 import google.generativeai as genai
-from flask import Flask, send_from_directory, render_template, request, jsonify
+from nltk.tokenize import sent_tokenize
 from flask_cors import CORS
 import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
