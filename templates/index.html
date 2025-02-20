@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/static/manifest.json" />
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
 
@@ -11,7 +11,7 @@ body {
     height: 100vh;
     margin: 0;
     background-color: #f7f7f7;
-    background-image: url(static/img/dddd.png);
+    background-image: url(/static/img/dddd.png);
     background-size: 70%;
     background-repeat: no-repeat;
     background-position: center;
@@ -96,14 +96,34 @@ body {
     outline: none;
 }
     </style>
+    <script>
+        function submitMessage() {
+            var input = document.getElementById("input-message");
+            var message = input.value;
+            input.value = "";
+
+            fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var messages = document.getElementById("messages");
+                var messageElement = document.createElement("div");
+                messageElement.innerHTML = "<b>챗봇:</b> " + data.answer;
+                messages.appendChild(messageElement);
+            });
+        }
+    </script>
 </head>
 <body>
     <div id="splash-screen">
-        <img src="static/img/splash.png" alt="" />
+        <img src="/static/img/splash.png" alt="" />
     </div>
 
     <div id="title-bar">
-        <img src="static/img/150new.png" alt="Logo" id="logo">
+        <img src="/static/img/150new.png" alt="Logo" id="logo">
         <span id="title-text">청렴 챗봇 Praxis</span>
     </div>
 
