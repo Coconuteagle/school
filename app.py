@@ -1,19 +1,28 @@
-from flask import Flask, send_from_directory, render_template, request, jsonify, Response
 import google.generativeai as genai
-from nltk.tokenize import sent_tokenize
+from flask import Flask, send_from_directory, render_template, request, jsonify
 from flask_cors import CORS
 import json
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re
 import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
 
 # 🔹 Google Gemini API 설정
-genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
+genai.configure(api_key="YOUR_API_KEY")
+
+# 🔹 모델 순서대로 정렬
+GEMINI_MODELS = [
+    "gemini-2.0-flash",                    # 1️⃣ Gemini 2.0 Flash
+    "gemini-2.0-flash-lite-preview",        # 2️⃣ Gemini 2.0 Flash-Lite 미리보기
+    "gemini-1.5-flash",                     # 3️⃣ Gemini 1.5 Flash
+    "gemini-1.5-flash-8b",                  # 4️⃣ Gemini 1.5 Flash-8B
+    "gemini-2.0-pro-experimental-02-05",    # 5️⃣ Gemini 2.0 Pro Experimental
+    "gemini-1.5-pro"                        # 6️⃣ Gemini 1.5 Pro
+]
 
 with open('data.txt', 'r', encoding='utf-8') as file:
     text = file.read()
@@ -52,22 +61,16 @@ def serve_static(filename):
 def index():
     return render_template('./index.html')
 
-GEMINI_MODELS = [
-    "gemini-2.0-flash",                    # 1️⃣ Gemini 2.0 Flash
-    "gemini-2.0-flash-lite-preview",        # 2️⃣ Gemini 2.0 Flash-Lite 미리보기
-    "gemini-1.5-flash",                     # 3️⃣ Gemini 1.5 Flash
-    "gemini-1.5-flash-8b",                  # 4️⃣ Gemini 1.5 Flash-8B
-    "gemini-2.0-pro-experimental-02-05",    # 5️⃣ Gemini 2.0 Pro Experimental
-    "gemini-1.5-pro"                        # 6️⃣ Gemini 1.5 Pro
-]
-
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
-    relevant_text = find_most_similar_sentences(user_question, document_sentences, top_n=10)
 
-    # 🔹 AI에게 전달할 시스템 메시지 추가
+    # 🔹 유사한 문장 찾기 (문자열 변환 필요)
+    relevant_sentences = find_most_similar_sentences(user_question, document_sentences, top_n=10)
+    relevant_text = "\n".join(relevant_sentences)  # 🔥 리스트를 문자열로 변환
+
+    # 🔹 AI에게 전달할 프롬프트 생성 (텍스트가 제대로 포함되도록 수정)
     system_message = f"""{relevant_text}
 
     당신은 학교행정업무 서포터입니다. 
@@ -77,6 +80,7 @@ def chat():
     4. 사용자에게 재질문 금지. 
     5. 관련 법령도 같이 답변(답변시 참조한 문장과 정확히 관련된 법령). 
     6. 링크가 있으면 링크도 답변(답변과 관련있는 링크만)."""
+
     response = None
     last_exception = None  # 🔹 마지막 오류 저장
     switched_model = None  # 🔹 사용된 모델 저장
@@ -85,8 +89,10 @@ def chat():
         try:
             print(f"[🔄] 모델 시도: {model}")  # 🔹 로그에는 모델 변경 내역 표시
             client = genai.GenerativeModel(model)
-            response = client.generate_content(user_question)
-            
+
+            # 🔥 AI 모델에게 system_message 포함하여 전달
+            response = client.generate_content(system_message)
+
             if response and hasattr(response, 'text') and response.text:
                 print(f"[✅] 모델 {model} 사용 성공!")
                 switched_model = model  # 🔹 모델 변경 감지
