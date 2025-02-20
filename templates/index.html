@@ -434,7 +434,7 @@ body {
         }
 
         function displayDefaultMessage() {
-            var defaultMsg = "안녕하세요! 청렴챗봇 ‘프락시스’입니다. 무엇을 도와드릴까요?";
+            var defaultMsg = "안녕하세요! 학교행정업무 서포터 ‘카타리나’입니다. 무엇을 도와드릴까요?";
 
             var messageContainer = document.createElement("div");
             messageContainer.className = "message-container bard-container";
@@ -448,7 +448,7 @@ body {
 
             // 이름 요소 추가
             var messageName = document.createElement("div");
-            messageName.textContent = "프락시스";
+            messageName.textContent = "카타리나";
             messageName.className = "message-name";
 
             var messageContent = document.createElement("div");
@@ -521,7 +521,7 @@ body {
 
                 // 이름 요소 추가
                 var messageName = document.createElement("div");
-                messageName.textContent = "프락시스";
+                messageName.textContent = "카타리나";
                 messageName.className = "message-name";
 
                 var messageContent = document.createElement("div");
@@ -600,7 +600,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     <div id="title-bar">
         <img src="static/img/150new.png" alt="Logo" id="logo">
-        <span id="title-text">청렴 챗봇 Praxis</span>
+        <span id="title-text">학교행정업무 서포터</span>
 
     </div>
 
@@ -608,8 +608,8 @@ document.addEventListener("DOMContentLoaded", function () {
         <div id="messages"></div>
     </div>
     <div class="question-slider">
-        <button onclick="submitMessage('어린이집 보육교사가 청탁금지법 적용대상에 해당되는지요?')">어린이집 보육교사도 적용되나요?</button>
-        <button onclick="submitMessage('스승의 날 담임선생님께 드리는 카네이션은 가능한가요?')">스승의 날 카네이션 가능?</button>
+        <button onclick="submitMessage('지출품의 하는 방법 알려주세요')">지출품의 하는 방법 알려주세요</button>
+        <button onclick="submitMessage('물품 등록은 어떻게 하나요?')">물품 등록은 어떻게 하나요?</button>
         <!-- 필요한 만큼 버튼 추가 -->
     </div>
     <form id="chat-form" onsubmit="event.preventDefault(); submitMessage()">
