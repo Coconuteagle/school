@@ -1,19 +1,29 @@
-from flask import Flask, send_from_directory, render_template, request, jsonify, Response
 import google.generativeai as genai
-from nltk.tokenize import sent_tokenize
+from flask import Flask, send_from_directory, render_template, request, jsonify
 from flask_cors import CORS
 import json
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re
 import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
 
 # 🔹 Google Gemini API 설정
 genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
+
+# 🔹 GEMINI 모델 리스트 (무거운 순서)
+GEMINI_MODELS = [
+    "gemini-1.5-pro",
+    "gemini-2.0-pro-experimental-02-05",
+    "gemini-2.0-flash-thinking-experimental-01-21",
+    "gemini-2.0-flash-lite-preview",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-flash"
+]
 
 with open('data.txt', 'r', encoding='utf-8') as file:
     text = file.read()
@@ -52,17 +62,7 @@ def serve_static(filename):
 def index():
     return render_template('./index.html')
 
-GEMINI_MODELS = [
-    "gemini-1.5-pro",
-    "gemini-2.0-pro-experimental-02-05",
-    "gemini-2.0-flash-thinking-experimental-01-21",
-    "gemini-2.0-flash-lite-preview",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-flash"
-]
 @app.route('/chat', methods=['POST'])
-
 def chat():
     data = request.get_json()
     user_question = data.get('question') + "?"
@@ -76,26 +76,37 @@ def chat():
     system_message = f"{relevant_text}\n\n당신은 카타리나입니다.\n1. 앞의 내용을 바탕으로 최대 7문장 이내+70단어 이내로 요약해서 존댓말로 답해줘.\n2. 질문이 내용과 관계없으면 다시 질문해주시겠어요? 라고 답변해줘\n3. 내용 바탕으로만 답변, 예외 사항과 사례 포함\n4. 사용자에게 재질문 금지\n5. 관련 법령도 포함 (참조한 문장과 정확히 관련된 법령)\n6. 링크가 있으면 링크도 답변 (관련 있는 링크만)\n"
 
     response = None
+
     for model in GEMINI_MODELS:
         try:
             print(f"[🔄] 모델 시도: {model}")
             client = genai.GenerativeModel(model)
             response = client.generate_content(system_message + "\n" + user_question)
-            if response:
-                break  # 성공하면 루프 탈출
+            
+            # 🔹 정상 응답이 있으면 루프 탈출
+            if response and response.text:
+                print(f"[✅] 모델 {model} 사용 성공!")
+                break
 
         except Exception as e:
-            if "quota exceeded" in str(e).lower():
-                print(f"[⚠️] {model} 한도 초과! 다음 모델로 전환...")
-            else:
-                print(f"[❌] {model} 호출 오류:", e)
-                return jsonify({"answer": "현재 AI 응답을 처리할 수 없습니다. 나중에 다시 시도해주세요."})
+            error_message = str(e).lower()
+            
+            # 🔹 한도 초과 에러 감지
+            if "quota exceeded" in error_message or "rate limit" in error_message:
+                print(f"[⚠️] {model} 한도 초과! 다음 모델로 전환 중...")
+                continue  # 다음 모델 시도
+            
+            # 🔹 기타 오류 발생 시 즉시 종료
+            print(f"[❌] {model} 호출 오류: {e}")
+            return jsonify({"answer": "현재 AI 응답을 처리할 수 없습니다. 나중에 다시 시도해주세요."})
 
-    if response:
-        answer_with_links = convert_urls_to_links(response.text)
-        return jsonify(answer=answer_with_links)
-    else:
+    # 🔹 모든 모델이 한도를 초과한 경우 처리
+    if response is None or not response.text:
+        print("[❌] 모든 모델이 한도를 초과했습니다.")
         return jsonify({"answer": "현재 모든 AI 모델이 사용 불가 상태입니다. 나중에 다시 시도해주세요."})
+
+    answer_with_links = convert_urls_to_links(response.text)
+    return jsonify(answer=answer_with_links)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
