@@ -16,11 +16,12 @@ genai.configure(api_key="AIzaSyCptpJ68R5lyJPduY8rtqUXR9Ij7F4puoE")
 
 # 🔹 GEMINI 모델 리스트 (무거운 순서)
 GEMINI_MODELS = [
-    "gemini-1.5-pro",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite-preview"
+    "gemini-2.0-flash",                    # 1️⃣ Gemini 2.0 Flash
+    "gemini-2.0-flash-lite-preview",        # 2️⃣ Gemini 2.0 Flash-Lite 미리보기
+    "gemini-1.5-flash",                     # 3️⃣ Gemini 1.5 Flash
+    "gemini-1.5-flash-8b",                  # 4️⃣ Gemini 1.5 Flash-8B
+    "gemini-2.0-pro-experimental-02-05",    # 5️⃣ Gemini 2.0 Pro Experimental
+    "gemini-1.5-pro"                        # 6️⃣ Gemini 1.5 Pro
 ]
 
 
